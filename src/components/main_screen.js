@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Button, Rate, Input, Modal } from "antd";
 import axios from "axios";
 import { useNavigate } from "react-router";
@@ -7,10 +7,17 @@ const color = { color: "red" };
 const MainScreen = ({ state, setState }) => {
   const [modal, contextHolder] = Modal.useModal();
   const navigate = useNavigate();
-
+  const [text, setText] = useState("");
+  const [model, setModel] = useState("");
+  const [dataRes, setDataRes] = useState({
+    id_save: "",
+    text_summary: "",
+  });
   useEffect(() => {
     console.log(state, "state");
-  }, []);
+    console.log(model);
+    console.log(text);
+  }, [model, text]);
 
   const TextArea = Input;
   const logout = () => {
@@ -44,6 +51,40 @@ const MainScreen = ({ state, setState }) => {
         console.log(error);
       });
   };
+
+  const textSummarization = (values) => {
+    axios
+      .post(`http://aicsdeep.ddns.net:8090/api/v1/text_summarization`, {
+        user_name: state?.user_name,
+        token_login: state?.token,
+        type_summary: model,
+        data_text: text,
+      })
+      .then(function (response) {
+        console.log(response);
+        let { data } = response;
+        if (data.code == 200) {
+          setDataRes({
+            id_save: data.data.id_save,
+            text_summary: data.data.text_summary,
+          });
+        } else {
+          modal.error({
+            title: "Error !",
+            content: (
+              <>
+                <div>Text summary thất bại</div>
+                <div>Lí do : {data.message}</div>
+              </>
+            ),
+          });
+        }
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+  };
+
   return (
     <div
       style={{
@@ -67,6 +108,7 @@ const MainScreen = ({ state, setState }) => {
             <h3>Văn bản gốc</h3>
           </div>
           <textarea
+            onChange={(e) => setText(e.target.value)}
             style={{
               width: "360px",
               height: "360px",
@@ -80,11 +122,14 @@ const MainScreen = ({ state, setState }) => {
           </div>
           <div
             style={{
+              textAlign: "start",
               width: "360px",
               height: "360px",
               border: "1px solid black",
             }}
-          ></div>
+          >
+            {dataRes.text_summary}
+          </div>
         </div>
       </div>
       <div
@@ -95,20 +140,30 @@ const MainScreen = ({ state, setState }) => {
           flexDirection: "column",
         }}
       >
-        <div>
+        <div
+          onChange={(e) => {
+            e.target.checked && setModel("model_1");
+          }}
+        >
           <input type="radio" name="Option" value="Opt1"></input>
           <label>
             Abstractive: Viết lại tóm tắt dựa trên việc hiểu nội dung của tài
             liệu.
           </label>
         </div>
-        <div>
+        <div
+          onChange={(e) => {
+            e.target.checked && setModel("model_2");
+          }}
+        >
           <input type="radio" name="Option" value="Opt2"></input>
           <label>Extractive: Chọn các ý chính trong tài liệu.</label>
         </div>
       </div>
 
-      <Button type="primary">Tóm tắt</Button>
+      <Button type="primary" onClick={() => textSummarization()}>
+        Tóm tắt
+      </Button>
       <p style={color}>
         Để sử dụng lượt tiếp theo, vui lòng đánh giá chất lượng văn bản tóm tắt
       </p>
