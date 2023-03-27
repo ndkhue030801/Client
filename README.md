@@ -9,4 +9,4 @@
 - Mở terminal sau đó sử dụng lệnh : " npm -i " để cài đặt tất cả các thư viện cần thiết
 
 ## Chạy code :
-- Sử dụng lệnh " npm start " để chạy code  
+- Sử dụng lệnh " npm start " để chạy code 
