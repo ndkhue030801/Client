@@ -13,11 +13,15 @@ const MainScreen = ({ state, setState }) => {
     id_save: "",
     text_summary: "",
   });
+  const [rate, setRate] = useState(0);
+  const [review, setReview] = useState("");
   useEffect(() => {
-    console.log(state, "state");
-    console.log(model);
-    console.log(text);
-  }, [model, text]);
+    // console.log(state, "state");
+    // console.log(model);
+    // console.log(text);
+    // console.log(rate);
+    console.log(review);
+  }, [review]);
 
   const TextArea = Input;
   const logout = () => {
@@ -52,7 +56,7 @@ const MainScreen = ({ state, setState }) => {
       });
   };
 
-  const textSummarization = (values) => {
+  const textSummarization = () => {
     axios
       .post(`http://aicsdeep.ddns.net:8090/api/v1/text_summarization`, {
         user_name: state?.user_name,
@@ -67,6 +71,50 @@ const MainScreen = ({ state, setState }) => {
           setDataRes({
             id_save: data.data.id_save,
             text_summary: data.data.text_summary,
+          });
+        } else {
+          modal.error({
+            title: "Error !",
+            content: (
+              <>
+                <div>Text summary thất bại</div>
+                <div>Lí do : {data.message}</div>
+              </>
+            ),
+          });
+        }
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+  };
+
+  const handleReview = () => {
+    let rateStr = "";
+    if (rate == 1) {
+      rateStr = "1 - Rất tệ";
+    } else if (rate == 2) {
+      rateStr = "2 - Tệ";
+    } else if (rate == 3) {
+      rateStr = "3 - Bình thường";
+    } else if (rate == 4) {
+      rateStr = "4 - Tốt";
+    } else if (rate == 5) {
+      rateStr = "5 - Rất tốt";
+    }
+    axios
+      .post(`http://aicsdeep.ddns.net:8090/api/v1/review`, {
+        user_name: state?.user_name,
+        token_login: state?.token,
+        id_save: dataRes?.id_save,
+        data_review: rateStr,
+      })
+      .then(function (response) {
+        console.log(response, "res review");
+        let { data } = response;
+        if (data.code == 200) {
+          setDataRes({
+            id_save: "",
           });
         } else {
           modal.error({
@@ -167,9 +215,16 @@ const MainScreen = ({ state, setState }) => {
       <p style={color}>
         Để sử dụng lượt tiếp theo, vui lòng đánh giá chất lượng văn bản tóm tắt
       </p>
-      <Rate />
+      <Rate onChange={setRate} value={rate} />
       <p>Ý kiến đóng góp (Không bắt buộc)</p>
-      <TextArea rows={4} placeholder="Xin mời đóng góp ý kiến!" />
+      <TextArea
+        rows={4}
+        placeholder="Xin mời đóng góp ý kiến!"
+        onChange={(e) => setReview(e.target.value)}
+      />
+      <Button type="primary" onClick={() => handleReview()}>
+        Gửi đánh giá
+      </Button>
     </div>
   );
 };
